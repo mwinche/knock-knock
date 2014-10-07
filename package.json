@@ -1,0 +1,37 @@
+{
+  "name": "knock-knock",
+  "version": "0.0.0",
+  "main": "lib/knock-knock.js",
+  "description": "UTW Hackathon (AtTask team)",
+  
+      "homepage": "https://github.com/mwinche/knock-knock",
+    
+    "bugs": "https://github.com/mwinche/knock-knock/issues",
+  "author": {
+    "name": "Matt Winchester",
+    "email": "matthewwinchester@attask.com" 
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mwinche/knock-knock"
+  },
+  "license": "MIT",
+  "files": [
+    "lib"
+  ],
+  "keywords": [
+    "knock-knock"  
+  ],
+  "devDependencies": {
+    "grunt-contrib-jshint": "^0.10.0",
+    "grunt-contrib-nodeunit": "^0.3.3",
+    "grunt-contrib-watch": "^0.6.1",
+    "load-grunt-tasks": "^0.4.0",
+    "time-grunt": "^0.3.1",
+    "grunt-mocha-cli": "^1.9.0",
+    "jshint-stylish": "^0.2.0" 
+  },
+  "scripts": {
+    "test": "grunt" 
+  } 
+}
