@@ -18,7 +18,7 @@
     "knock-knock"
   ],
   "dependencies": {
-    "minimist": "^1.1.0",
-    "axios": "^0.4.0"
+    "lifx": "^0.2.1",
+    "minimist": "^1.1.0"
   }
 }

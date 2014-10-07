@@ -1,43 +1,95 @@
-var axios = require('axios');
 var argv = require('minimist')(process.argv.slice(2));
 var port = argv.p || 3000;
 var http = require('http');
-var fs = require('fs');
-var path = require('path');
-var server;
-var LIFX_HOST = 'http://192.168.1.223:56780';
-var LIFX_ID = 'd073d5018475';
+var lifx = require('lifx');
 
-function toggleBrightness(color, count) {
-	console.log('toggle brightness', count);
-	axios.put(LIFX_HOST + '/lights/' + LIFX_ID + '/color', {
-		hue: color.hue,
-		saturation: color.saturation,
-		brightness: (count) % 2,
-		duration: .01
-	})
-	.then(function () {
-		if (count < 5) {
-			toggleBrightness(color, count + 1);
+var server, nextKnock, ourBulb;
+lx = lifx.init();
+
+lx.on('rawpacket', function(pkt, b) {
+	if(pkt.packetTypeShortName === 'lightStatus' && pkt.payload.bulbLabel === 'AtTask'){
+		if(typeof nextKnock === 'function'){
+			nextKnock(pkt.payload);
+			nextKnock = undefined;
 		}
-	});
+	}
+});
+
+function lazyLoadBulb() {
+	if (!ourBulb) {
+		lx.bulbs.forEach(function (bulb) {
+			if (bulb.name === 'AtTask') {
+				ourBulb = bulb;
+			}
+		});
+
+		lx.stopDiscovery();
+	}
+}
+
+var knocking = false;
+
+function knock(timings, originalColors){
+	var max = 0;
+
+	if(knocking){ return; }
+	knocking = true;
+
+	lazyLoadBulb();
+
+	if(timings && timings.length > 0){
+		timings.forEach(function(timing){
+			setTimeout(function(){
+				lx.lightsColour(0xd49e, 0xffff,     0x8888,    0x0dac,      0x0032,   ourBulb);
+			}, timing);
+
+			setTimeout(function(){
+				lx.lightsColour(0xd49e, 0xffff,     0xffff,    0x0dac,      0x0032,   ourBulb);
+			}, timing + 50);
+
+			setTimeout(function(){
+				lx.lightsColour(0xd49e, 0xffff,     0x8888,    0x0dac,      0x0032,   ourBulb);
+			}, timing + 100);
+
+			max = max > timing ? max : timing;
+		});
+
+		setTimeout(function(){
+			lx.lightsColour(originalColors.hue, originalColors.saturation, originalColors.brightness, 0x0dac, 0x02f1, ourBulb);
+
+			knocking = false;
+		}, max + 1000);
+	}
 }
 
 server = http.createServer(function (req, res) {
 	var url = req.url;
 
 	if (url === '/api/knock') {
-		console.log('Knock knock Neo');
-		res.write('Knock knock Neo');
-		res.end();
-	} else if (url === '/api/lifx') {
-		axios.get(LIFX_HOST + '/lights/' + LIFX_ID)
-			.then(function (res) {
-				toggleBrightness(res.data.color, 0);
-			});
+		req.on('data', function(data, err){
+			var message = data.toString('utf8'),
+				timings;
 
-		console.log('Ooh, pretty');
-		res.write('Ooh, pretty');
+			try{
+				timings = JSON.parse(message);
+			}
+			catch(e){
+				res.code = 400;
+				res.write('Error: ' + e);
+
+				return;
+			}
+
+			lazyLoadBulb();
+
+			if(ourBulb){
+				nextKnock = function(colors){
+					knock(timings, colors);
+				};
+			}
+		});
+
+		res.write(JSON.stringify(ourBulb? 'Request sent': 'Cannot find bulb'));
 		res.end();
 	} else {
 		res.write('Unsupported request');
