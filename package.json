@@ -1,7 +1,7 @@
 {
   "name": "knock-knock",
   "version": "0.0.0",
-  "main": "lib/knock-knock.js",
+  "main": "modules/api/index.js",
   "description": "UTW Hackathon (AtTask team)",
   "homepage": "https://github.com/mwinche/knock-knock",
   "bugs": "https://github.com/mwinche/knock-knock/issues",
@@ -16,5 +16,8 @@
   "license": "MIT",
   "keywords": [
     "knock-knock"
-  ]
+  ],
+  "dependencies": {
+    "minimist": "^1.1.0"
+  }
 }
