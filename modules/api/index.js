@@ -18,6 +18,7 @@ lx.on('rawpacket', function(pkt, b) {
 function lazyLoadBulb() {
 	if (!ourBulb) {
 		lx.bulbs.forEach(function (bulb) {
+console.log('bulb.name', bulb.name);
 			if (bulb.name === 'AtTask') {
 				ourBulb = bulb;
 			}
@@ -28,11 +29,13 @@ function lazyLoadBulb() {
 }
 
 var knocking = false;
+console.log('============NOT KNOCKING==============');
 
 function knock(timings, originalColors){
 	var max = 0;
 
 	if(knocking){ return; }
+console.log('============KNOCKING==============');
 	knocking = true;
 
 	lazyLoadBulb();
@@ -58,15 +61,18 @@ function knock(timings, originalColors){
 			lx.lightsColour(originalColors.hue, originalColors.saturation, originalColors.brightness, 0x0dac, 0x02f1, ourBulb);
 
 			knocking = false;
+console.log('============NOT KNOCKING==============');
 		}, max + 1000);
 	}
 }
 
 server = http.createServer(function (req, res) {
-	var url = req.url;
+	var url = req.url,
+		resp = 'Cannot find bulb';
 
 	if (url === '/api/knock') {
 		req.on('data', function(data, err){
+			console.log('getting data');
 			var message = data.toString('utf8'),
 				timings;
 
@@ -83,14 +89,23 @@ server = http.createServer(function (req, res) {
 			lazyLoadBulb();
 
 			if(ourBulb){
-				nextKnock = function(colors){
-					knock(timings, colors);
-				};
+				if(!nextKnock && !knocking){
+					nextKnock = function(colors){
+						knock(timings, colors);
+					};
+					lx.requestStatus();
+					resp = 'Knock sent';
+				}
+				else{
+					resp = 'Already knocking';
+				}
 			}
-		});
 
-		res.write(JSON.stringify(ourBulb? 'Request sent': 'Cannot find bulb'));
-		res.end();
+			console.log('got data', resp);
+
+			res.write(resp);
+			res.end();
+		});
 	} else {
 		res.write('Unsupported request');
 		res.end();
