@@ -8,17 +8,8 @@ var COLORS = {
 	6: 0x09d7
 };
 
-var server, nextKnock, ourBulb;
+var server, ourBulb;
 lx = lifx.init();
-
-lx.on('rawpacket', function(pkt, b) {
-	if(pkt.packetTypeShortName === 'lightStatus' && pkt.payload.bulbLabel === 'AtTask'){
-		if(typeof nextKnock === 'function'){
-			nextKnock(pkt.payload);
-			nextKnock = undefined;
-		}
-	}
-});
 
 function lazyLoadBulb() {
 	if (!ourBulb) {
@@ -30,6 +21,8 @@ console.log('bulb.name', bulb.name);
 		});
 
 		lx.stopDiscovery();
+
+		lx.lightsColour(0, 0xffff, 0, 0x0dac, 0x0032, ourBulb);
 	}
 }
 
@@ -102,11 +95,12 @@ server = http.createServer(function (req, res) {
 			console.log('Number of knocks: ', timings.length);
 
 			if(ourBulb){
-				if(!nextKnock && !knocking){
-					nextKnock = function(colors){
-						knock(timings, colors);
-					};
-					lx.requestStatus();
+				if(!knocking){
+					knock(timings, {
+						hue: 0,
+						brightness: 0,
+						saturation: 0xffff
+					});
 					resp = 'Knock sent';
 				}
 				else{
