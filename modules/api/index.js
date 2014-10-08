@@ -3,6 +3,11 @@ var port = argv.p || 3000;
 var http = require('http');
 var lifx = require('lifx');
 
+var COLORS = {
+	1: 0xf378,
+	6: 0x09d7
+};
+
 var server, nextKnock, ourBulb;
 lx = lifx.init();
 
@@ -32,7 +37,8 @@ var knocking = false;
 console.log('============NOT KNOCKING==============');
 
 function knock(timings, originalColors){
-	var max = 0;
+console.log('knock', timings, originalColors);
+	var max = 0, lastTiming;
 
 	if(knocking){ return; }
 console.log('============KNOCKING==============');
@@ -40,27 +46,32 @@ console.log('============KNOCKING==============');
 
 	lazyLoadBulb();
 
+
 	if(timings && timings.length > 0){
+		var color = COLORS[timings.length] || 0xd49e;
+
 		timings.forEach(function(timing){
+			max = max > timing ? max : timing;
+
 			setTimeout(function(){
-				lx.lightsColour(0xd49e, 0xffff,     0x8888,    0x0dac,      0x0032,   ourBulb);
+				lx.lightsColour(color, 0xffff,     0x6666,    0x0dac,      0x0032,   ourBulb);
 			}, timing);
 
 			setTimeout(function(){
-				lx.lightsColour(0xd49e, 0xffff,     0xffff,    0x0dac,      0x0032,   ourBulb);
+				lx.lightsColour(color, 0xffff,     0xffff,    0x0dac,      0x0032,   ourBulb);
 			}, timing + 50);
 
 			setTimeout(function(){
-				lx.lightsColour(0xd49e, 0xffff,     0x8888,    0x0dac,      0x0032,   ourBulb);
+				lx.lightsColour(color, 0xffff,     0x6666,    0x0dac,      0x0032,   ourBulb);
 			}, timing + 100);
-
-			max = max > timing ? max : timing;
 		});
+
 
 		setTimeout(function(){
 			lx.lightsColour(originalColors.hue, originalColors.saturation, originalColors.brightness, 0x0dac, 0x02f1, ourBulb);
 
 			knocking = false;
+console.log('timing', timings);
 console.log('============NOT KNOCKING==============');
 		}, max + 1000);
 	}
@@ -87,6 +98,8 @@ server = http.createServer(function (req, res) {
 			}
 
 			lazyLoadBulb();
+
+			console.log('Number of knocks: ', timings.length);
 
 			if(ourBulb){
 				if(!nextKnock && !knocking){
