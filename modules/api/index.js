@@ -5,7 +5,7 @@ var lifx = require('lifx');
 
 var COLORS = {
 	1: 0xf378,
-	6: 0x09d7
+	6: 0xaaaa
 };
 
 var server, ourBulb;
@@ -43,21 +43,11 @@ console.log('============KNOCKING==============');
 	if(timings && timings.length > 0){
 		var color = COLORS[timings.length] || 0xd49e;
 
-		timings.forEach(function(timing){
-			max = max > timing ? max : timing;
+		lx.lightsColour(color, 0xffff,     0xffff,    0x0dac,      0x1f4,   ourBulb);
 
-			setTimeout(function(){
-				lx.lightsColour(color, 0xffff,     0x6666,    0x0dac,      0x0032,   ourBulb);
-			}, timing);
-
-			setTimeout(function(){
-				lx.lightsColour(color, 0xffff,     0xffff,    0x0dac,      0x0032,   ourBulb);
-			}, timing + 50);
-
-			setTimeout(function(){
-				lx.lightsColour(color, 0xffff,     0x6666,    0x0dac,      0x0032,   ourBulb);
-			}, timing + 100);
-		});
+		setTimeout(function(){
+			lx.lightsColour(color, 0xffff,     0x6666,    0x0dac,      0x1f4,   ourBulb);
+		}, 500);
 
 
 		setTimeout(function(){
@@ -66,7 +56,7 @@ console.log('============KNOCKING==============');
 			knocking = false;
 console.log('timing', timings);
 console.log('============NOT KNOCKING==============');
-		}, max + 1000);
+		}, 2000);
 	}
 }
 
@@ -74,6 +64,11 @@ server = http.createServer(function (req, res) {
 	var url = req.url,
 		resp = 'Cannot find bulb';
 
+	if (url === '/api/newBulb'){
+		ourBulb = undefined;
+		res.write('done');
+		res.end();
+	}
 	if (url === '/api/knock') {
 		req.on('data', function(data, err){
 			console.log('getting data');
