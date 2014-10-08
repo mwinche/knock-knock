@@ -4,8 +4,8 @@ var http = require('http');
 var lifx = require('lifx');
 
 var COLORS = {
-	1: 0xf378,
-	6: 0xaaaa
+	1: {color: 0xf378, name: 'Bob'},
+	6: {color: 0xaaaa, name: 'Alice'}
 };
 
 var server, ourBulb;
@@ -41,7 +41,7 @@ console.log('============KNOCKING==============');
 
 
 	if(timings && timings.length > 0){
-		var color = COLORS[timings.length] || 0xd49e;
+		var color = (COLORS[timings.length]&& COLORS[timings.length].color) || 0xd49e;
 
 		lx.lightsColour(color, 0xffff,     0xffff,    0x0dac,      0x1f4,   ourBulb);
 
@@ -64,12 +64,55 @@ server = http.createServer(function (req, res) {
 	var url = req.url,
 		resp = 'Cannot find bulb';
 
+
 	if (url === '/api/newBulb'){
 		ourBulb = undefined;
 		res.write('done');
 		res.end();
 	}
-	if (url === '/api/knock') {
+	else if (url === '/api/user'){
+		var users = Object.keys(COLORS).reduce(function(array, knocks){
+			array.push({
+				name: COLORS[knocks].name,
+				color: COLORS[knocks].color,
+				knocks: knocks
+			});
+
+			return array;
+		}, []);
+
+		var data = '';
+
+		req.on('data', function (chunk) {
+			data += chunk;
+		});
+
+		req.on('end', function () {
+			try{
+				if(data.length > 0){
+					console.log(data);
+					var newUser = JSON.parse(data);
+
+					COLORS[newUser.knocks] = {
+						name: newUser.name,
+						color: newUser.color
+					};
+					res.write(JSON.stringify({data:'success'}));
+				}
+				else{
+					res.write(JSON.stringify(users));
+				}
+			}
+			catch(e){
+				res.write(e.toString());
+				res.code = 400;
+			}
+
+			res.end();
+		});
+
+	}
+	else if (url === '/api/knock') {
 		req.on('data', function(data, err){
 			console.log('getting data');
 			var message = data.toString('utf8'),
